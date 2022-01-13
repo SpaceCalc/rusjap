@@ -7,7 +7,7 @@ ApplicationWindow {
     width: 800
     height: 480
     visible: true
-    title: "rusjap v1.0"
+    title: "rusjap v1.1"
 
     color: "#1e1e1e"
 
@@ -181,6 +181,7 @@ ApplicationWindow {
 
         function setup()
         {
+            hintMa.checked = false
             phrases = preview.ldata["phrases"]
 
             // shuffle
@@ -281,56 +282,67 @@ ApplicationWindow {
             }
         }
 
+
         ColumnLayout {
+            id: lessonLayout
             anchors.centerIn: parent
             spacing: 26
 
-            SText {
-                visible: trainMode_1.checked
-                text: lesson.rus
-                Layout.fillWidth: true
-                horizontalAlignment: Qt.AlignHCenter
-                factor: 25
-                font.bold: true
-            }
-
             ColumnLayout {
-                visible: trainMode_2.checked && lesson.hirkat.length > 0
+                id: questionLayout
                 spacing: 0
 
                 SText {
-                    text: lesson.hirkat
+                    visible: hintMa.checked || trainMode_1.checked
+                    text: lesson.rus
                     Layout.fillWidth: true
                     horizontalAlignment: Qt.AlignHCenter
                     factor: 25
                     font.bold: true
                 }
 
-                SText {
-                    text: "хирагана / катакана"
-                    Layout.fillWidth: true
-                    horizontalAlignment: Qt.AlignHCenter
-                    opacity: 0.7
+                ColumnLayout {
+                    Layout.topMargin: 26
+                    visible: (trainMode_2.checked || hintMa.checked) &&
+                        lesson.hirkat.length > 0
+                    spacing: 0
+
+                    SText {
+                        text: lesson.hirkat
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                        factor: 25
+                        font.bold: true
+                    }
+
+                    SText {
+                        text: "хирагана / катакана"
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                        opacity: 0.7
+                    }
                 }
-            }
 
-            ColumnLayout {
-                visible: trainMode_2.checked && lesson.kanji.length > 0
-                spacing: 0
+                ColumnLayout {
+                    Layout.topMargin: 26
+                    visible: (trainMode_2.checked || hintMa.checked) &&
+                        lesson.kanji.length > 0
+                    spacing: 0
 
-                SText {
-                    text: lesson.kanji
-                    Layout.fillWidth: true
-                    horizontalAlignment: Qt.AlignHCenter
-                    factor: 25
-                    font.bold: true
-                }
+                    SText {
+                        text: lesson.kanji
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                        factor: 25
+                        font.bold: true
+                    }
 
-                SText {
-                    text: "кандзи"
-                    Layout.fillWidth: true
-                    horizontalAlignment: Qt.AlignHCenter
-                    opacity: 0.7
+                    SText {
+                        text: "кандзи"
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                        opacity: 0.7
+                    }
                 }
             }
 
@@ -349,6 +361,19 @@ ApplicationWindow {
 
                 onClicked: lesson.next()
             }
+        }
+
+        MouseArea {
+            id: hintMa
+            anchors.top: lessonLayout.top
+            anchors.left: lessonLayout.left
+            anchors.right: lessonLayout.right
+            height: questionLayout.height
+
+            cursorShape: Qt.PointingHandCursor
+
+            property bool checked: false
+            onClicked: checked = !checked
         }
     }
 
