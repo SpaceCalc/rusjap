@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.qmlmodels 1.0
+import rusjap.backend 1.0
 
 Window {
     width: 800
@@ -11,6 +11,10 @@ Window {
 
     color: "#1e1e1e"
 
+    Backend {
+        id: backend
+    }
+
     Rectangle {
         id: menu
         clip: true
@@ -19,11 +23,23 @@ Window {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
 
-        implicitWidth: 200
+        width: 200
+
+        function hide()
+        {
+            menuAnimation.duration = 200
+            menu.width = 0
+        }
+
+        function show()
+        {
+            menuAnimation.duration = 250
+            menu.width = 200
+        }
 
         Behavior on width {
             PropertyAnimation {
-                duration: menu.width === 0 ? 250 : 200
+                id: menuAnimation
                 easing.type: Easing.InOutCubic
             }
         }
@@ -32,10 +48,11 @@ Window {
 
         ListView {
             anchors.fill: parent
-            model: [ "Урок 1", "Урок 2", "Урок 3", "Урок 4", "Урок 5" ]
+            model: backend.lessons
 
             delegate: MenuButton {
-                text: modelData
+                text: modelData["name"]
+
                 onClicked: {
                     startScreen.visible = false
                     preview.visible = true
@@ -111,7 +128,7 @@ Window {
                 text: "Начать"
 
                 onClicked: {
-                    menu.width = 0
+                    menu.hide()
                     preview.visible = false
                     lesson.visible = true
                 }
@@ -152,7 +169,7 @@ Window {
                 onClicked: {
                     lesson.visible = false
                     preview.visible = true
-                    menu.width = menu.implicitWidth
+                    menu.show()
                 }
             }
         }
@@ -208,6 +225,26 @@ Window {
 
                 onClicked:  {
                     lesson.visible = false
+
+                    let data = [
+                            {
+                                "question" : "スパイダーマン / スパイダーマン",
+                                "answer" : "Привет",
+                                "myAnswer" : "пока"
+                            },
+                            {
+                                "question" : "スパイダーマン / スパイダーマン",
+                                "answer" : "Привет",
+                                "myAnswer" : ""
+                            },
+                            {
+                                "question" : "スパイダーマン / スパイダーマン",
+                                "answer" : "Привет",
+                                "myAnswer" : "Пока"
+                            }
+                        ]
+
+                    scoreGrid.update(data)
                     score.visible = true
                 }
             }
@@ -235,14 +272,14 @@ Window {
                 onClicked: {
                     score.visible = false
                     preview.visible = true
-                    menu.width = menu.implicitWidth
+                    menu.show()
                 }
             }
         }
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: 100
+            anchors.leftMargin: 150
             spacing: 16
 
             SText {
@@ -252,76 +289,40 @@ Window {
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                implicitWidth: scoreGrid.width
                 height: 1
                 color: "#3c3c3c"
             }
 
-            TableView {
-                id: scoreTable
-
-                implicitWidth: calcWidth()
-                implicitHeight: contentHeight
-
-                function calcWidth() {
-                    let w = 0
-                    for (var i = 0; i < 4; ++i)
-                        w += columnWidthProvider(i)
-                    w += columnSpacing * 3
-                    return w
-                }
-
-                columnWidthProvider: function(c) {
-                    switch (c) {
-                    case 0: return 50;
-                    case 1: return 200;
-                    default: return 100;
-                    }
-                }
-
+            GridLayout {
+                id: scoreGrid
+                columns: 4
                 columnSpacing: 16
+                rowSpacing: 16
 
-                model: TableModel {
-                    TableModelColumn { display: "num" }
-                    TableModelColumn { display: "question" }
-                    TableModelColumn { display: "answer" }
-                    TableModelColumn { display: "myAnswer" }
+                function update(data)
+                {
+                    for (var i = 0; i < scoreGrid.children.length; i++)
+                        scoreGrid.children[i].destroy()
 
-                    rows: [
+                    let c = Qt.createComponent("SCell.qml")
+
+                    for (var j = 0; j < data.length; j++)
+                    {
+                        c.createObject(scoreGrid, { text: j, num: true })
+                        c.createObject(scoreGrid, { text: data[j]["question"] })
+                        c.createObject(scoreGrid, { text: data[j]["answer"]   })
+
+                        if (data[j]["myAnswer"].length === 0)
                         {
-                            "num": 1,
-                            "question": "スパイダーマン / スパイダーマン",
-                            "answer": "Привет",
-                            "myAnswer" : ""
-                        },
-                        {
-                            "num": 2,
-                            "question": "スパイダーマン / スパイダーマン",
-                            "answer": "Привет",
-                            "myAnswer" : "пока"
-                        },
-                        {
-                            "num": 3,
-                            "question": "スパイダーマン / スパイダーマン",
-                            "answer": "Привет",
-                            "myAnswer" : "собака"
-                        },
-                        {
-                            "num": 4,
-                            "question": "スパイダーマン / スパイダーマン",
-                            "answer": "Привет",
-                            "myAnswer" : "человек"
+                            c.createObject(scoreGrid,
+                                { text: "нет", color: "#cf6679" })
                         }
-                    ]
-                }
-
-                delegate: Item {
-                    implicitHeight: 50
-
-                    SText {
-                        anchors.fill: parent
-                        horizontalAlignment: Qt.AlignHCenter
-                        text: display
+                        else
+                        {
+                            c.createObject(scoreGrid,
+                                { text: data[j]["myAnswer"] })
+                        }
                     }
                 }
             }

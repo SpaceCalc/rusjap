@@ -1,6 +1,7 @@
 QT += quick
 
 SOURCES += \
+        Backend.cpp \
         main.cpp
 
 resources.files = \
@@ -10,7 +11,8 @@ resources.files = \
     SRadioButton.qml \
     SButton.qml \
     STextField.qml \
-    STextButton.qml
+    STextButton.qml \
+    SCell.qml
 
 resources.prefix = /$${TARGET}
 RESOURCES += resources
@@ -25,3 +27,8 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+HEADERS += \
+    Backend.h
+
+
