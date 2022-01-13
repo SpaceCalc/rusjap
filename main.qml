@@ -7,7 +7,7 @@ Window {
     width: 800
     height: 480
     visible: true
-    title: "Russian-Japanese Trainer"
+    title: "rusjap v1.0"
 
     color: "#1e1e1e"
 
@@ -79,8 +79,14 @@ Window {
             anchors.centerIn: parent
 
             SText {
+                visible: backend.error.length === 0
                 text: "Выберите урок для начала тренировки"
-                color: "white"
+            }
+
+            SText {
+                visible: backend.error.length > 0
+                text: backend.error
+                color: "#cf6679"
             }
         }
     }

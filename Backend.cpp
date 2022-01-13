@@ -5,11 +5,16 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlError>
-#include <QDebug>
 
 Backend::Backend(QObject* parent) : QObject(parent)
 {
     auto appDirPath = qApp->applicationDirPath();
+
+    if (!QDir(appDirPath).exists("lessons.xlsx"))
+    {
+        m_error = "Отсутствует файл lessons.xlsx";
+        return;
+    }
 
     auto db = QSqlDatabase::addDatabase("QODBC", "xlsx_connection");
 
@@ -19,7 +24,7 @@ Backend::Backend(QObject* parent) : QObject(parent)
 
     if (!db.open())
     {
-        qDebug() << db.lastError().text();
+        m_error = "Ошибка базы данных\n" + db.lastError().text();
         return;
     }
 
@@ -27,7 +32,7 @@ Backend::Backend(QObject* parent) : QObject(parent)
 
     if (!query.exec("select * from [" + QString("about") + "$]"))
     {
-        qDebug() << query.lastError().text();
+        m_error = "Ошибка базы данных\n" + query.lastError().text();
         return;
     }
 
@@ -82,5 +87,10 @@ Backend::Backend(QObject* parent) : QObject(parent)
     }
 
     db.close();
+
+    if (m_lessons.empty())
+    {
+        m_error = "В файле lessons.xlsx нет доступных уроков";
+    }
 }
 
