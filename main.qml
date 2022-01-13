@@ -50,11 +50,17 @@ Window {
             anchors.fill: parent
             model: backend.lessons
 
+            ScrollBar.vertical: ScrollBar {
+                active: true
+            }
+
             delegate: MenuButton {
+                implicitWidth: 200
                 text: modelData["name"]
 
                 onClicked: {
                     startScreen.visible = false
+                    preview.ldata = modelData
                     preview.visible = true
                 }
             }
@@ -84,13 +90,15 @@ Window {
         anchors.fill: startScreen
         visible: false
 
+        property var ldata: undefined
+
         ColumnLayout {
             id: previewLayout
             anchors.centerIn: parent
             spacing: 12
 
             SText {
-                text: "Урок 1"
+                text: preview.ldata ? preview.ldata["name"] : ""
                 font.bold: true
                 factor: 1
             }
@@ -102,7 +110,13 @@ Window {
             }
 
             SText {
-                text: "Количество слов: 20"
+                visible: text.length > 0
+                text: preview.ldata ? preview.ldata["about"] : ""
+            }
+
+            SText {
+                text: "Количество слов: " +
+                    (preview.ldata ? preview.ldata["phrases"].length : 0)
             }
 
             ColumnLayout {
@@ -113,11 +127,13 @@ Window {
                 }
 
                 SRadioButton {
+                    id: trainMode_1
                     text: "Русский -> Японский"
                     checked: true
                 }
 
                 SRadioButton {
+                    id: trainMode_2
                     text: "Японский -> Русский"
                 }
             }
@@ -130,6 +146,8 @@ Window {
                 onClicked: {
                     menu.hide()
                     preview.visible = false
+                    lesson.setup()
+                    lesson.next()
                     lesson.visible = true
                 }
             }
@@ -148,16 +166,99 @@ Window {
         anchors.fill: startScreen
         visible: false
 
+        property var phrases
+        property int phraseCount: 0
+        property int phraseNum: 0
+        property string rus
+        property string hirkat
+        property string kanji
+
+        function setup()
+        {
+            phrases = preview.ldata["phrases"]
+
+            // shuffle
+            for (var i = phrases.length - 1; i > 0; i--)
+            {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = phrases[i];
+                phrases[i] = phrases[j];
+                phrases[j] = temp;
+            }
+
+            phraseNum = -1
+            phraseCount = phrases.length
+        }
+
+        function next()
+        {
+            phraseNum++;
+
+            if (phraseNum >= phraseCount)
+            {
+                nextStage();
+            }
+            else
+            {
+                phrases[phraseNum]["answer"] = answer.text
+
+                rus    = phrases[phraseNum]["rus"]
+                hirkat = phrases[phraseNum]["hirkat"]
+                kanji  = phrases[phraseNum]["kanji"]
+                answer.text = ""
+                answer.forceActiveFocus()
+            }
+        }
+
+        function nextStage()
+        {
+            let data = []
+
+            for (var i = 0; i < lesson.phrases.length; i++)
+            {
+                let rus = lesson.phrases[i]["rus"]
+                let hirkat = lesson.phrases[i]["hirkat"]
+                let kanji = lesson.phrases[i]["kanji"]
+                let myAnswer = lesson.phrases[i]["answer"]
+
+                let jap = ""
+
+                if (hirkat.length > 0 && kanji.length > 0)
+                {
+                    jap = hirkat + " / " + kanji
+                }
+                else if (hirkat.length > 0)
+                {
+                    jap = hirkat
+                }
+                else
+                {
+                    jap = kanji
+                }
+
+                let item = { }
+                item["question"] = trainMode_1.checked ? rus : jap
+                item["answer"] = trainMode_1.checked ? jap : rus
+                item["myAnswer"] = myAnswer
+
+                data.push(item)
+            }
+
+            scoreGrid.update(data)
+            lesson.visible = false
+            score.visible = true
+        }
+
         ColumnLayout {
 
             SText {
-                text: "Урок 1"
+                text: preview.ldata ? preview.ldata["name"] : ""
                 font.bold: true
                 factor: 1
             }
 
             SText {
-                text: "1 / 20"
+                text: (lesson.phraseNum + 1) + " / " + lesson.phraseCount
                 opacity: 0.7
             }
 
@@ -174,16 +275,27 @@ Window {
             }
         }
 
-
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 26
 
+            SText {
+                visible: trainMode_1.checked
+                text: lesson.rus
+                Layout.fillWidth: true
+                horizontalAlignment: Qt.AlignHCenter
+                factor: 25
+                font.bold: true
+            }
+
             ColumnLayout {
+                visible: trainMode_2.checked && lesson.hirkat.length > 0
                 spacing: 0
 
                 SText {
-                    text: "スパイダーマン"
+                    text: lesson.hirkat
+                    Layout.fillWidth: true
+                    horizontalAlignment: Qt.AlignHCenter
                     factor: 25
                     font.bold: true
                 }
@@ -197,10 +309,13 @@ Window {
             }
 
             ColumnLayout {
+                visible: trainMode_2.checked && lesson.kanji.length > 0
                 spacing: 0
 
                 SText {
-                    text: "スパイダーマン"
+                    text: lesson.kanji
+                    Layout.fillWidth: true
+                    horizontalAlignment: Qt.AlignHCenter
                     factor: 25
                     font.bold: true
                 }
@@ -215,38 +330,18 @@ Window {
 
             STextField {
                 id: answer
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                implicitWidth: 200
                 horizontalAlignment: Qt.AlignHCenter
+                onAccepted: lesson.next()
             }
 
             SButton {
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                implicitWidth: 200
                 text: "Продолжить"
 
-                onClicked:  {
-                    lesson.visible = false
-
-                    let data = [
-                            {
-                                "question" : "スパイダーマン / スパイダーマン",
-                                "answer" : "Привет",
-                                "myAnswer" : "пока"
-                            },
-                            {
-                                "question" : "スパイダーマン / スパイダーマン",
-                                "answer" : "Привет",
-                                "myAnswer" : ""
-                            },
-                            {
-                                "question" : "スパイダーマン / スパイダーマン",
-                                "answer" : "Привет",
-                                "myAnswer" : "Пока"
-                            }
-                        ]
-
-                    scoreGrid.update(data)
-                    score.visible = true
-                }
+                onClicked: lesson.next()
             }
         }
     }
@@ -260,7 +355,7 @@ Window {
             id: scoreMenu
 
             SText {
-                text: "Урок 1"
+                text: preview.ldata ? preview.ldata["name"] : ""
                 font.bold: true
                 factor: 1
             }
@@ -294,40 +389,44 @@ Window {
                 color: "#3c3c3c"
             }
 
-            GridLayout {
-                id: scoreGrid
-                columns: 4
-                columnSpacing: 16
-                rowSpacing: 16
+            ScrollView {
+                id: scoreView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-                function update(data)
-                {
-                    for (var i = 0; i < scoreGrid.children.length; i++)
-                        scoreGrid.children[i].destroy()
+                GridLayout {
+                    id: scoreGrid
+                    columns: 4
+                    columnSpacing: 16
+                    rowSpacing: 16
 
-                    let c = Qt.createComponent("SCell.qml")
-
-                    for (var j = 0; j < data.length; j++)
+                    function update(data)
                     {
-                        c.createObject(scoreGrid, { text: j, num: true })
-                        c.createObject(scoreGrid, { text: data[j]["question"] })
-                        c.createObject(scoreGrid, { text: data[j]["answer"]   })
+                        for (var i = 0; i < scoreGrid.children.length; i++)
+                            scoreGrid.children[i].destroy()
 
-                        if (data[j]["myAnswer"].length === 0)
+                        let c = Qt.createComponent("SText.qml")
+
+                        for (var j = 0; j < data.length; j++)
                         {
-                            c.createObject(scoreGrid,
-                                { text: "нет", color: "#cf6679" })
-                        }
-                        else
-                        {
-                            c.createObject(scoreGrid,
-                                { text: data[j]["myAnswer"] })
+                            c.createObject(scoreGrid, { text: j + 1 })
+                            c.createObject(scoreGrid, { text: data[j]["question"] })
+                            c.createObject(scoreGrid, { text: data[j]["answer"]   })
+
+                            if (data[j]["myAnswer"].length === 0)
+                            {
+                                c.createObject(scoreGrid,
+                                    { text: "нет", color: "#cf6679" })
+                            }
+                            else
+                            {
+                                c.createObject(scoreGrid,
+                                    { text: data[j]["myAnswer"] })
+                            }
                         }
                     }
                 }
             }
-
-            Item { Layout.fillHeight: true }
         }
     }
 }

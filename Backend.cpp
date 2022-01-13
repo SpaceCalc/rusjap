@@ -1,36 +1,86 @@
 #include "Backend.h"
 #include <QGuiApplication>
 #include <QDir>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlRecord>
+#include <QSqlError>
+#include <QDebug>
 
 Backend::Backend(QObject* parent) : QObject(parent)
 {
     auto appDirPath = qApp->applicationDirPath();
 
-    QDir lessonsDir = appDirPath + "/lessons";
+    auto db = QSqlDatabase::addDatabase("QODBC", "xlsx_connection");
 
-    if (!lessonsDir.exists())
-        lessonsDir.mkpath(".");
+    db.setDatabaseName(
+        "DRIVER={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};"
+        "DBQ=" + appDirPath + "/lessons.xlsx");
 
-    auto files = lessonsDir.entryInfoList({ "*.csv" }, QDir::Files);
-
-    for (auto& file : files)
+    if (!db.open())
     {
-        QString path = file.absoluteFilePath();
+        qDebug() << db.lastError().text();
+        return;
+    }
+
+    QSqlQuery query(db);
+
+    if (!query.exec("select * from [" + QString("about") + "$]"))
+    {
+        qDebug() << query.lastError().text();
+        return;
+    }
+
+    QVector<QPair<QString, QString>> tables;
+
+    while (query.next())
+    {
+        auto table = query.value(0).toString();
+        auto about = query.value(1).toString();
+
+        tables.push_back({table, about});
+    }
+
+    for (const auto& [ table, about ] : tables)
+    {
+        bool ok = query.exec("select * from [" + table + "$]");
+
+        if (!ok)
+        {
+            continue;
+        }
 
         QVariantList phrases;
-        QString error = parse(path, phrases);
+
+        while (query.next())
+        {
+            auto rus = query.value(0).toString();
+            auto hirkat = query.value(1).toString();
+            auto kanji = query.value(2).toString();
+
+            rus = rus.simplified();
+            hirkat = hirkat.simplified();
+            kanji = kanji.simplified();
+
+            if (rus.isEmpty() || (hirkat.isEmpty() && kanji.isEmpty()))
+                continue;
+
+            QVariantMap map;
+            map["rus"] = rus;
+            map["hirkat"] = hirkat;
+            map["kanji"] = kanji;
+
+            phrases.append(map);
+        }
 
         QVariantMap lesson;
-        lesson["path"] = path;
-        lesson["name"] = file.baseName();
-        lesson["error"] = error;
+        lesson["name"] = table;
+        lesson["about"] = about.simplified();
         lesson["phrases"] = phrases;
 
-        m_lessons.push_back(lesson);
+        m_lessons.append(lesson);
     }
+
+    db.close();
 }
 
-QString Backend::parse(const QString& filePath, QVariantList& phrases)
-{
-    return {};
-}

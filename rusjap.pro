@@ -1,4 +1,7 @@
-QT += quick
+QT += quick sql
+
+HEADERS += \
+    Backend.h
 
 SOURCES += \
         Backend.cpp \
@@ -12,7 +15,7 @@ resources.files = \
     SButton.qml \
     STextField.qml \
     STextButton.qml \
-    SCell.qml
+    SVScrollBar.qml \
 
 resources.prefix = /$${TARGET}
 RESOURCES += resources
@@ -27,8 +30,3 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-HEADERS += \
-    Backend.h
-
-

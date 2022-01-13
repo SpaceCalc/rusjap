@@ -4,7 +4,6 @@ import QtQuick.Controls
 AbstractButton {
     id: control
 
-    width: parent.width
     implicitHeight: 64
 
     checkable: true

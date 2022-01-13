@@ -18,8 +18,6 @@ signals:
 
 private:
     QVariantList m_lessons;
-
-    QString parse(const QString& filePath, QVariantList& phrases);
 };
 
 #endif // BACKEND_H
