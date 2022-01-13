@@ -1,5 +1,7 @@
 QT += quick sql
 
+CONFIG += c++17
+
 HEADERS += \
     Backend.h
 
