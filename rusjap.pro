@@ -2,6 +2,12 @@ QT += quick sql
 
 CONFIG += c++17
 
+CONFIG(debug, debug|release) {
+    DESTDIR = debug
+} else {
+    DESTDIR = release
+}
+
 HEADERS += \
     Backend.h
 
@@ -22,11 +28,11 @@ resources.files = \
 resources.prefix = /$${TARGET}
 RESOURCES += resources
 
-# Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
-
-# Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH =
+copydata.commands = $(COPY_FILE) $$shell_path($$PWD/data/lessons.xlsx) $$shell_path($$OUT_PWD/$${DESTDIR}/lessons.xlsx)
+first.depends = $(first) copydata
+export(first.depends)
+export(copydata.commands)
+QMAKE_EXTRA_TARGETS += first copydata
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
