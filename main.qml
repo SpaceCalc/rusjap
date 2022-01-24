@@ -207,6 +207,7 @@ ApplicationWindow {
             }
             else
             {
+                hintMa.checked = false
                 phrases[phraseNum]["answer"] = answer.text
 
                 rus    = phrases[phraseNum]["rus"]
