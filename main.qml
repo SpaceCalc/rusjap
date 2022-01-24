@@ -7,7 +7,7 @@ ApplicationWindow {
     width: 800
     height: 480
     visible: true
-    title: "rusjap v1.1"
+    title: "RusJap v1.2"
 
     color: "#1e1e1e"
 
@@ -88,6 +88,17 @@ ApplicationWindow {
                 text: backend.error
                 color: "#cf6679"
             }
+        }
+
+        STextButton {
+            id: about
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 25
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            text: "RusJap на github.com"
+            color: "dimgrey"
+            onClicked: Qt.openUrlExternally("http://github.com/SpaceCalc/rusjap");
         }
     }
 
